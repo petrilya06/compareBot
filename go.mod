@@ -6,6 +6,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/mymmrac/telego v0.31.4
+	github.com/vitali-fedulov/images3 v1.0.16
 )
 
 require (
@@ -23,6 +24,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.57.0 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
+	github.com/vitali-fedulov/hyper v1.0.1 // indirect
 	golang.org/x/arch v0.6.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 )

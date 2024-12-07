@@ -33,7 +33,11 @@ func Bot() {
 	for update := range updates {
 		if update.Message != nil {
 			userID := update.Message.From.ID
-			HandleMessage(update, userID)
+			HandleMessage(bot, update, userID)
+		}
+
+		if update.CallbackQuery != nil {
+			HandleCallback(bot, update)
 		}
 	}
 }
