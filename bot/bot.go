@@ -31,6 +31,10 @@ func Bot() {
 	defer database.CloseDatabase()
 
 	for update := range updates {
+		if update.Message.Contact != nil {
+			HandleContact(bot, update)
+		}
+		
 		if update.Message != nil {
 			userID := update.Message.From.ID
 			HandleMessage(bot, update, userID)

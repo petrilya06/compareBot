@@ -76,7 +76,7 @@ func downloadPhoto(bot *tg.Bot, user *db.User) {
 		return
 	}
 
-	photo := profilePhotos.Photos[0][2]
+	photo := profilePhotos.Photos[0][0]
 	file, err := bot.GetFile(&tg.GetFileParams{FileID: photo.FileID})
 	if err != nil {
 		fmt.Println("error in get file:", err)

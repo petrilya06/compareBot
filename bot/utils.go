@@ -32,7 +32,7 @@ func comparePhotos(path1, path2 string) bool {
 }
 
 func CheckPhotos(bot *tg.Bot, user *db.User) {
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -43,20 +43,20 @@ func CheckPhotos(bot *tg.Bot, user *db.User) {
 			path2 := fmt.Sprintf("src/photos/%d.jpg", user.TgID)
 
 			if comparePhotos(path1, path2) {
-				user.CountCompare += 1
-				fmt.Println(user.CountCompare)
+				user.CountPhotoCompare += 1
+				fmt.Println(user)
 
-				if user.CountCompare >= 24 {
+				if user.CountPhotoCompare >= 24 {
 					// TODO сделать свою систему выплату
 					SendMessage(bot, user, emptyKeyboard, "Тебе назначена выплата!")
-					user.CountCompare = 0
+					user.CountPhotoCompare = 0
 				}
 			} else {
-				if user.CountCompare != 0 {
-					SendMessage(bot, user, emptyKeyboard, "Вы сменили аватарку!")
+				if user.CountPhotoCompare != 0 {
+					SendMessage(bot, user, emptyKeyboard, "Ваша аватарка не совпадает!")
 				}
 
-				user.CountCompare = 0
+				user.CountPhotoCompare = 0
 			}
 
 			if err := database.UpdateUser(*user); err != nil {
@@ -71,5 +71,4 @@ func CheckPhotos(bot *tg.Bot, user *db.User) {
 
 func StopChecks() {
 	close(StopChannel)
-	fmt.Println("Проверка фотографий остановлена.")
 }

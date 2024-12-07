@@ -9,11 +9,13 @@ import (
 )
 
 type User struct {
-	TgID          int64
-	SelectPic     int
-	CountCompare  int
-	LastPhotoID   int
-	LastMessageID int
+	TgID              int64
+	Confirm           bool
+	SelectPic         int
+	CountPhotoCompare int
+	CountTextCompare  int
+	LastPhotoID       int
+	LastMessageID     int
 }
 
 type Database struct {
@@ -41,9 +43,11 @@ func NewDatabase() (*Database, error) {
 
 func (d *Database) CreateTable() error {
 	createTableSQL := `CREATE TABLE IF NOT EXISTS users (
-		tgID BIGINT PRIMARY KEY, 
+		tgID BIGINT PRIMARY KEY,
+		confirm BOOLEAN, 
 		selectPic INT,
-		countCompare INT,
+		countPhotoComzpare INT,
+		countTextCompare INT,
 		lastPhotoID INT,
 		lastMessageID INT
 	);`
@@ -56,16 +60,18 @@ func (d *Database) CreateTable() error {
 }
 
 func (d *Database) InsertUser(user User) error {
-	insertSQL := `INSERT INTO users (tgID, selectPic, countCompare, lastPhotoID, lastMessageID) 
-	VALUES ($1, $2, $3, $4, $5)
+	insertSQL := `INSERT INTO users (tgID, confirm, selectPic, countPhotoCompare, 
+                   countTextCompare, lastPhotoID, lastMessageID) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	ON CONFLICT (tgID) DO UPDATE SET 
 		selectPic = EXCLUDED.selectPic,
-		countCompare = EXCLUDED.countCompare,
+		countPhotoCompare = EXCLUDED.countPhotoCompare,
+	    countTextCompare = EXCLUDED.countTextCompare,
 		lastPhotoID = EXCLUDED.lastPhotoID,
 		lastMessageID = EXCLUDED.lastMessageID;`
 
-	_, err := d.Conn.Exec(insertSQL, user.TgID, user.SelectPic,
-		user.CountCompare, user.LastPhotoID, user.LastMessageID)
+	_, err := d.Conn.Exec(insertSQL, user.TgID, user.Confirm, user.SelectPic,
+		user.CountPhotoCompare, user.CountTextCompare, user.LastPhotoID, user.LastMessageID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,10 +82,11 @@ func (d *Database) InsertUser(user User) error {
 func (d *Database) UpdateUser(user User) error {
 	updateSQL := `
 		UPDATE users 
-		SET selectPic = $1, countCompare = $2, lastPhotoID = $3, lastMessageID = $4
-		WHERE tgID = $5`
-	_, err := d.Conn.Exec(updateSQL, &user.SelectPic, &user.CountCompare,
-		&user.LastPhotoID, &user.LastMessageID, &user.TgID)
+		SET confirm = $1, selectPic = $2, countPhotoCompare = $3, countTextCompare = $4, 
+		    lastPhotoID = $5, lastMessageID = $6
+		WHERE tgID = $7`
+	_, err := d.Conn.Exec(updateSQL, &user.Confirm, &user.SelectPic, &user.CountPhotoCompare,
+		&user.CountTextCompare, &user.LastPhotoID, &user.LastMessageID, &user.TgID)
 	if err != nil {
 		return fmt.Errorf("error in update: %w", err)
 	}
@@ -93,7 +100,8 @@ func (d *Database) GetDataUser(tgID int64) (*User, error) {
 	query := `SELECT * FROM users WHERE tgID = $1;`
 	row := d.Conn.QueryRow(query, tgID)
 
-	err := row.Scan(&user.TgID, &user.SelectPic, &user.CountCompare, &user.LastPhotoID, &user.LastMessageID)
+	err := row.Scan(&user.TgID, &user.Confirm, &user.SelectPic, &user.CountPhotoCompare,
+		&user.CountTextCompare, &user.LastPhotoID, &user.LastMessageID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no user found with tgID: %d", tgID)

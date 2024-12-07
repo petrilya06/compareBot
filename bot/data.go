@@ -6,15 +6,28 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
+var userInfo *tg.ChatFullInfo
 var StopChannel = make(chan struct{})
 var database *db.Database
 var user *db.User
 var index = 0
-var prices = []string{"1000", "2000"}
+var photoPrices = []string{"1000", "2000"}
+var phrasesPrices = []string{"150", "300"}
+var phrases = []string{
+	"Бу! Испугался? Не бойся",
+	"Я РУССКИЙ!",
+}
 
 var chooseKeyboard = tu.Keyboard(
-	tu.KeyboardRow(tu.KeyboardButton("Выбрать аватарку")),
-).WithResizeKeyboard().WithOneTimeKeyboard()
+	tu.KeyboardRow(
+		tu.KeyboardButton("Выбрать аватарку"),
+		tu.KeyboardButton("Выбрать описание"),
+	)).WithResizeKeyboard().WithOneTimeKeyboard()
+
+var confirmKeyboard = tu.Keyboard(
+	tu.KeyboardRow(
+		tu.KeyboardButton("Подтвердить номер телефон").WithRequestContact(),
+	)).WithResizeKeyboard()
 
 var inlineKeyboardConfirm = tg.InlineKeyboardMarkup{
 	InlineKeyboard: [][]tg.InlineKeyboardButton{
@@ -36,7 +49,7 @@ var inlineKeyboard = tg.InlineKeyboardMarkup{
 		{
 			{
 				Text:         "Выбрать",
-				CallbackData: prices[index],
+				CallbackData: photoPrices[index],
 			},
 			{
 				Text:         "Следующая",
