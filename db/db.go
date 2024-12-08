@@ -12,6 +12,7 @@ type User struct {
 	TgID              int64
 	Confirm           bool
 	SelectPic         int
+	SelectText        int
 	CountPhotoCompare int
 	CountTextCompare  int
 	LastPhotoID       int
@@ -46,7 +47,8 @@ func (d *Database) CreateTable() error {
 		tgID BIGINT PRIMARY KEY,
 		confirm BOOLEAN, 
 		selectPic INT,
-		countPhotoComzpare INT,
+		selectText INT,
+		countPhotoCompare INT,
 		countTextCompare INT,
 		lastPhotoID INT,
 		lastMessageID INT
@@ -60,17 +62,18 @@ func (d *Database) CreateTable() error {
 }
 
 func (d *Database) InsertUser(user User) error {
-	insertSQL := `INSERT INTO users (tgID, confirm, selectPic, countPhotoCompare, 
+	insertSQL := `INSERT INTO users (tgID, confirm, selectPic, selectText, countPhotoCompare, 
                    countTextCompare, lastPhotoID, lastMessageID) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	ON CONFLICT (tgID) DO UPDATE SET 
 		selectPic = EXCLUDED.selectPic,
+	    selectText = EXCLUDED.selectText,
 		countPhotoCompare = EXCLUDED.countPhotoCompare,
 	    countTextCompare = EXCLUDED.countTextCompare,
 		lastPhotoID = EXCLUDED.lastPhotoID,
 		lastMessageID = EXCLUDED.lastMessageID;`
 
-	_, err := d.Conn.Exec(insertSQL, user.TgID, user.Confirm, user.SelectPic,
+	_, err := d.Conn.Exec(insertSQL, user.TgID, user.Confirm, user.SelectPic, user.SelectText,
 		user.CountPhotoCompare, user.CountTextCompare, user.LastPhotoID, user.LastMessageID)
 	if err != nil {
 		log.Fatal(err)
@@ -82,10 +85,10 @@ func (d *Database) InsertUser(user User) error {
 func (d *Database) UpdateUser(user User) error {
 	updateSQL := `
 		UPDATE users 
-		SET confirm = $1, selectPic = $2, countPhotoCompare = $3, countTextCompare = $4, 
-		    lastPhotoID = $5, lastMessageID = $6
-		WHERE tgID = $7`
-	_, err := d.Conn.Exec(updateSQL, &user.Confirm, &user.SelectPic, &user.CountPhotoCompare,
+		SET confirm = $1, selectPic = $2, selectText = $3, countPhotoCompare = $4, 
+		    countTextCompare = $5, lastPhotoID = $6, lastMessageID = $7
+		WHERE tgID = $8`
+	_, err := d.Conn.Exec(updateSQL, &user.Confirm, &user.SelectPic, &user.SelectText, &user.CountPhotoCompare,
 		&user.CountTextCompare, &user.LastPhotoID, &user.LastMessageID, &user.TgID)
 	if err != nil {
 		return fmt.Errorf("error in update: %w", err)
@@ -94,23 +97,24 @@ func (d *Database) UpdateUser(user User) error {
 	return nil
 }
 
-func (d *Database) GetDataUser(tgID int64) (*User, error) {
-	var user User
-
-	query := `SELECT * FROM users WHERE tgID = $1;`
-	row := d.Conn.QueryRow(query, tgID)
-
-	err := row.Scan(&user.TgID, &user.Confirm, &user.SelectPic, &user.CountPhotoCompare,
-		&user.CountTextCompare, &user.LastPhotoID, &user.LastMessageID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no user found with tgID: %d", tgID)
-		}
-		return nil, fmt.Errorf("error retrieving user: %w", err)
-	}
-
-	return &user, nil
-}
+//
+//func (d *Database) GetDataUser(tgID int64) (User, error) {
+//	var user User
+//
+//	query := `SELECT * FROM users WHERE tgID = $1;`
+//	row := d.Conn.QueryRow(query, tgID)
+//
+//	err := row.Scan(&user.TgID, &user.Confirm, &user.SelectPic, &user.SelectText,
+//		&user.CountPhotoCompare, &user.CountTextCompare, &user.LastPhotoID, &user.LastMessageID)
+//	if err != nil {
+//		if err == sql.ErrNoRows {
+//			return nil, fmt.Errorf("no user found with tgID: %d", tgID)
+//		}
+//		return nil, fmt.Errorf("error retrieving user: %w", err)
+//	}
+//
+//	return &user, nil
+//}
 
 func (d *Database) CloseDatabase() {
 	if err := d.Conn.Close(); err != nil {

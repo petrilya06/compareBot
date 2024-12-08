@@ -7,15 +7,24 @@ import (
 )
 
 var userInfo *tg.ChatFullInfo
-var StopChannel = make(chan struct{})
+var contact *tg.Contact
+var StopChannelPhoto = make(chan struct{})
+var StopChannelText = make(chan struct{})
 var database *db.Database
-var user *db.User
-var index = 0
 var photoPrices = []string{"1000", "2000"}
 var phrasesPrices = []string{"150", "300"}
 var phrases = []string{
 	"Бу! Испугался? Не бойся",
 	"Я РУССКИЙ!",
+}
+
+var user = &db.User{
+	Confirm:           false,
+	SelectPic:         0,
+	LastMessageID:     0,
+	LastPhotoID:       0,
+	CountPhotoCompare: 0,
+	CountTextCompare:  0,
 }
 
 var chooseKeyboard = tu.Keyboard(
@@ -44,12 +53,12 @@ var inlineKeyboardConfirm = tg.InlineKeyboardMarkup{
 	},
 }
 
-var inlineKeyboard = tg.InlineKeyboardMarkup{
+var InlineKeyboardPhoto = tg.InlineKeyboardMarkup{
 	InlineKeyboard: [][]tg.InlineKeyboardButton{
 		{
 			{
 				Text:         "Выбрать",
-				CallbackData: photoPrices[index],
+				CallbackData: photoPrices[user.SelectPic],
 			},
 			{
 				Text:         "Следующая",

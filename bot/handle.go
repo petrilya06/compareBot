@@ -11,54 +11,46 @@ import (
 func HandleMessage(bot *tg.Bot, update tg.Update, userID int64) {
 	switch update.Message.Text {
 	case "/start":
-		newUser := db.User{
-			TgID:              userID,
-			Confirm:           false,
-			SelectPic:         0,
-			LastMessageID:     0,
-			LastPhotoID:       0,
-			CountPhotoCompare: 0,
-			CountTextCompare:  0,
-		}
-
-		if err := database.InsertUser(newUser); err != nil {
+		user = &db.User{TgID: userID}
+		if err := database.InsertUser(*user); err != nil {
 			return
 		}
-
-		user, _ = database.GetDataUser(newUser.TgID)
 
 		// подтверждение профиля
 		SendMessage(bot, user, *confirmKeyboard, "Подтвердите свой профиль:")
 
 	case "Выбрать аватарку":
-		StopChecks()
-		SendPhoto(bot, user, inlineKeyboard, fmt.Sprintf("Выберите подходяющую для вас аватарку\n"+
-			"За данную аватарку будет выплачиться %s рублей", photoPrices[index]))
+		StopChecks(StopChannelPhoto)
+		SendPhoto(bot, user, InlineKeyboardPhoto, fmt.Sprintf("Выберите подходяющую для вас аватарку\n"+
+			"За данную аватарку будет выплачиться %s рублей", photoPrices[user.SelectPic]))
 	}
+
 }
 
 func HandleCallback(bot *tg.Bot, update tg.Update) {
 	switch update.CallbackQuery.Data {
 	case "next", "no":
-		index += 1
-		if index == len(photoPrices) {
-			index = 0 // если прокрутили до конца, то возвращаемся к первому элементу
+		user.SelectPic += 1
+		if user.SelectPic == len(photoPrices) {
+			user.SelectPic = 0 // если прокрутили до конца, то возвращаемся к первому элементу
+		}
+		if err := database.UpdateUser(*user); err != nil {
+			return
 		}
 
-		EditPhotoKeyboard(bot, user, inlineKeyboard, fmt.Sprintf("За данную "+
-			"аватарку будет выплачиться %s рублей", photoPrices[index]))
+		EditPhotoKeyboard(bot, user, InlineKeyboardPhoto, fmt.Sprintf("За данную "+
+			"аватарку будет выплачиться %s рублей", photoPrices[user.SelectPic]))
 
 	case "yes":
-		user.SelectPic = index
 		if err := database.UpdateUser(*user); err != nil {
 			return
 		}
 
 		DeleteMessages(bot, user, []int{user.LastMessageID, user.LastPhotoID})
 		SendMessage(bot, user, *chooseKeyboard, fmt.Sprintf("Спасибо за подтверждение! "+
-			"Вам назначена выплата %s рублей", photoPrices[index]))
+			"Вам назначена выплата %s рублей", photoPrices[user.SelectPic]))
 
-		StopChannel = make(chan struct{})
+		StopChannelPhoto = make(chan struct{})
 		go CheckPhotos(bot, user)
 
 	default:
@@ -69,10 +61,8 @@ func HandleCallback(bot *tg.Bot, update tg.Update) {
 }
 
 func HandleContact(bot *tg.Bot, update tg.Update) {
-	userInfo, _ = bot.GetChat(&tg.GetChatParams{
-		ChatID: tu.ID(user.TgID),
-	})
-	contact := update.Message.Contact
+	userInfo, _ = bot.GetChat(&tg.GetChatParams{ChatID: tu.ID(user.TgID)})
+	contact = update.Message.Contact
 
 	if contact.FirstName == userInfo.FirstName && contact.LastName == userInfo.LastName {
 		user.Confirm = true

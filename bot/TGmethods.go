@@ -24,7 +24,7 @@ func SendPhoto(bot *tg.Bot, user *db.User, keyboard tg.InlineKeyboardMarkup, mes
 	SendMessage(bot, user, emptyKeyboard, message)
 	msg, _ := bot.SendPhoto(tu.Photo(
 		tu.ID(user.TgID),
-		tu.File(OpenFile(fmt.Sprintf("src/%d.jpg", index))),
+		tu.File(OpenFile(fmt.Sprintf("src/%d.jpg", user.SelectPic))),
 	).WithReplyMarkup(&keyboard))
 
 	user.LastPhotoID = msg.MessageID
@@ -43,7 +43,7 @@ func EditPhotoKeyboard(bot *tg.Bot, user *db.User, keyboard tg.InlineKeyboardMar
 	_, _ = bot.EditMessageMedia(&tg.EditMessageMediaParams{
 		ChatID:    tu.ID(user.TgID),
 		MessageID: user.LastPhotoID,
-		Media:     tu.MediaPhoto(tu.File(OpenFile(fmt.Sprintf("src/%d.jpg", index)))),
+		Media:     tu.MediaPhoto(tu.File(OpenFile(fmt.Sprintf("src/%d.jpg", user.SelectPic)))),
 	})
 
 	_, _ = bot.EditMessageReplyMarkup(&tg.EditMessageReplyMarkupParams{
